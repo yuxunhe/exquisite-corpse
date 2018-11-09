@@ -14,17 +14,21 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        re_entered_password = request.form['re-entered-password']
         db = get_db()
         error = None
         if not username:
             error = 'Username is required.'
         elif not password:
             error = 'Password is required.'
+        elif not re_entered_password:
+            error = 'Please confirm password.'
         elif db.execute(
             'SELECT id FROM user WHERE username = ?', (username,)
         ).fetchone() is not None:
             error = 'User {} is already registered.'.format(username)
-
+        elif password != re_entered_password:
+            error = "Re-entered password is different from password. Please try again."
         if error is None:
             db.execute(
                 'INSERT INTO user (username, password) VALUES (?, ?)',
@@ -87,5 +91,3 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
-
-    
