@@ -40,9 +40,7 @@ def mine():
     db = get_db()
     user_id = session.get('user_id')
     corpse_ids = db.execute(
-        'SELECT corpse_id FROM limb'
-        'WHERE author_id = ?'
-        'ORDER BY created DESC' (user_id)
+        'SELECT corpse_id FROM limb WHERE author_id = ? ORDER BY created DESC', (g.user['id'])
     ).fetchall()
     corpses = []
     for corpse_id in corpse_ids:
@@ -50,7 +48,7 @@ def mine():
             ("\n").join(db.execute(
                 'SELECT body from limb'
 	            'WHERE corpse_id = ?'
-	            'ORDER BY created DESC' (corpse_id)
+	            'ORDER BY created DESC', (corpse_id)
             ).fetchall())
         )
     return render_template('corpse/mine.html', corpses = corpses)

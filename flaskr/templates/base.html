@@ -8,11 +8,13 @@
       <li><span>{{ g.user['username'] }}</span></li>
       <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
       <li><a href="{{ url_for('corpse.create') }}">Start New Corpse</a></li>
-      <li>View My Corpses</li> <!-- TODO: Add link. -->
+      <li><a href="{{ url_for('corpse.index') }}">Add a Limb</a></li>
+      <li><a href="{{ url_for('corpse.mine') }}">View My Corpses</a></li>
       <li>View Existing Corpses</li> <!-- TODO: Add link. -->
     {% else %}
       <li><a href="{{ url_for('auth.register') }}">Register</a></li>
       <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+      <li><a href="{{ url_for('corpse.index') }}">Add a Limb</a></li>
       <li>View Existing Corpses</li> <!-- TODO: Add link. -->
     {% endif %}
   </ul>
