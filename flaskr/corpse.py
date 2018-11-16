@@ -10,7 +10,7 @@ bp = Blueprint('corpse', __name__)
 
 @bp.route('/', methods=('GET', 'POST'))
 @login_required
-def index():
+def index(): #add a limb
     db = get_db()
     limb_text = db.execute(
         'SELECT body FROM limb ORDER BY created DESC'
@@ -28,8 +28,8 @@ def index():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO limb (body, author_id)'
-                ' VALUES (?, ?)',
+                'INSERT INTO limb (body, author_id, corpse_id)'
+                ' VALUES (?, ?, 1)',
                 (body, g.user['id'])
             )
             db.commit()
@@ -43,6 +43,7 @@ def mine():
         'SELECT corpse_id FROM limb WHERE author_id = ? ORDER BY created DESC', (g.user['id'],)
     ).fetchall()
     corpses = []
+    print(corpse_ids)
     for corpse_id in corpse_ids:
         if corpse_id:
             corpses.append(
@@ -67,9 +68,14 @@ def create():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO limb (body, author_id)'
-                ' VALUES (?, ?)',
-                (body, g.user['id'])
+                'INSERT INTO limb (author_id) VALUES (?)',
+                (g.user['id'],)
+            )
+
+            db.execute(
+                'INSERT INTO limb (body, author_id, corpse_id)'
+                ' VALUES (?, ?, ?)',
+                (body, g.user['id'], db.cursor().lastrowid)
             )
             db.commit()
             return redirect(url_for('corpse.index'))
