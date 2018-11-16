@@ -5,14 +5,9 @@
 {% endblock %}
 
 {% block content %}
-  {% for limb in limbs %}
-    <article class="limb">
-      <header>
-        <div>
-          <div class="about">by {{ limb['username'] }} on {{ limb['created'].strftime('%Y-%m-%d') }}</div>
-        </div>
-      </header>
-      <p class="body">{{ limb['body'] }}</p>
+  {% for corpse in corpses %}
+    <article class="corpse">
+      <p class="body">{{ corpse }}</p>
     </article>
     {% if not loop.last %}
       <hr>

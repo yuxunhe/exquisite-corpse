@@ -30,7 +30,7 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
 
-    from . import blog
+    from . import corpse
     app.register_blueprint(corpse.bp)
     app.add_url_rule('/', endpoint='index')
 
