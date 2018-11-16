@@ -13,8 +13,7 @@ bp = Blueprint('corpse', __name__)
 def index():
     db = get_db()
     limb_text = db.execute(
-        'SELECT body FROM limb'
-        'ORDER BY created DESC'
+        'SELECT body FROM limb ORDER BY created DESC'
     ).fetchone()
 
     if request.method == 'POST':
@@ -49,9 +48,9 @@ def mine():
     for corpse_id in corpse_ids:
         corpses.append(
             ("\n").join(db.execute(
-            'SELECT body from limb'
-	        'WHERE corpse_id = ?'
-	        'ORDER BY created DESC' (corpse_id)
+                'SELECT body from limb'
+	            'WHERE corpse_id = ?'
+	            'ORDER BY created DESC' (corpse_id)
             ).fetchall())
         )
     return render_template('corpse/mine.html', corpses = corpses)
