@@ -68,14 +68,14 @@ def create():
         else:
             db = get_db()
             db.execute(
-                'INSERT INTO limb (author_id) VALUES (?)',
+                'INSERT INTO corpse (author_id) VALUES (?)',
                 (g.user['id'],)
             )
-
+            corpse_id = db.execute('SELECT id from corpse ORDER BY id DESC').fetchone()
             db.execute(
                 'INSERT INTO limb (body, author_id, corpse_id)'
                 ' VALUES (?, ?, ?)',
-                (body, g.user['id'], db.cursor().lastrowid)
+                (body, g.user['id'], corpse_id['id'])
             )
             db.commit()
             return redirect(url_for('corpse.index'))
