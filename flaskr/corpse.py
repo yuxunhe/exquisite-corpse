@@ -40,17 +40,16 @@ def mine():
     db = get_db()
     user_id = session.get('user_id')
     corpse_ids = db.execute(
-        'SELECT corpse_id FROM limb WHERE author_id = ? ORDER BY created DESC', (g.user['id'])
+        'SELECT corpse_id FROM limb WHERE author_id = ? ORDER BY created DESC', (g.user['id'],)
     ).fetchall()
     corpses = []
     for corpse_id in corpse_ids:
-        corpses.append(
-            ("\n").join(db.execute(
-                'SELECT body from limb'
-	            'WHERE corpse_id = ?'
-	            'ORDER BY created DESC', (corpse_id)
-            ).fetchall())
-        )
+        if corpse_id:
+            corpses.append(
+                ("\n").join(db.execute(
+                'SELECT body from limb WHERE corpse_id = ? ORDER BY created DESC', (corpse_id,)
+                ).fetchall())
+            )
     return render_template('corpse/mine.html', corpses = corpses)
 
 @bp.route('/create', methods=('GET', 'POST'))
