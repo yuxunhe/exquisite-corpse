@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+  <p class="body">{{ prompt }}</p>
   <form method="post">
     <textarea name="body" id="body">{{ request.form['body'] }}</textarea>
     <input type="submit" value="Save">
