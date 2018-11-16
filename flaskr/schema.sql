@@ -14,6 +14,7 @@ CREATE TABLE limb (
   corpse_id INTEGER,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   body TEXT NOT NULL,
+  completed INTEGER NOT NULL,
   FOREIGN KEY (author_id) REFERENCES user (id),
   FOREIGN KEY (corpse_id) REFERENCES corpse (id)
 );

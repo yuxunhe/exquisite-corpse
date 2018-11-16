@@ -35,7 +35,12 @@ def register():
                 (username, generate_password_hash(password))
             )
             db.commit()
-            return redirect(url_for('auth.login'))
+            user = db.execute(
+                'SELECT id FROM user ORDER BY id DESC'
+            ).fetchone()
+            session.clear()
+            session['user_id'] = user['id']
+            return redirect(url_for('index'))
 
         flash(error)
 

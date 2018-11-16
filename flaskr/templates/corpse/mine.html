@@ -1,13 +1,17 @@
 {% extends 'base.html' %}
 
 {% block header %}
-  <h1>{% block title %}Limbs{% endblock %}</h1>
+  <h1>{% block title %}{{ header }}{% endblock %}</h1>
 {% endblock %}
 
 {% block content %}
   {% for corpse in corpses %}
     <article class="corpse">
-      <p class="body">{{ corpse }}</p>
+      <p class="body">
+        {% autoescape false %}
+          {{corpse}}
+        {% endautoescape %}
+      </p>
     </article>
     {% if not loop.last %}
       <hr>
