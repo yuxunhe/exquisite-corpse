@@ -18,13 +18,17 @@ def index(): #add a limb
     ).fetchall() #1 is true!
     if len(rows) == 0:
         return redirect(url_for('corpse.no_corpse_available'))
-    random.shuffle(rows)
-    row = rows[0]
-    corpse_id = row["id"]
-    limb_rows= db.execute(
-        'SELECT body FROM limb WHERE corpse_id = (?) ORDER BY created DESC', (corpse_id,)
-    ).fetchall()
-    limb = limb_rows[0][0]
+    if request.method == 'GET':
+        row = random.choice(rows)
+        corpse_id = row["id"]
+        session["corpseId"] = corpse_id
+        print("retrived id: %d" %(corpse_id))
+        limb_rows= db.execute(
+            'SELECT body FROM limb WHERE corpse_id = (?) ORDER BY created DESC', (corpse_id,)
+        ).fetchall()
+        limb = limb_rows[0][0]
+        session["limb"] = limb
+        session["row_size"] = len(limb_rows)
     #This part actually handles the posting
     if request.method == 'POST':
         body = request.form['body']
@@ -34,21 +38,25 @@ def index(): #add a limb
         if error is not None:
             flash(error)
         else:
-            db = get_db()
+            #db = get_db()
+            user_id = "NULL"
+            if g.user:
+                user_id = g.user['id']
+            print("posted id: %d" %(session["corpseId"]))
             db.execute(
                 'INSERT INTO limb (body, author_id, corpse_id, completed)'
                 ' VALUES (?, ?, ?, ?)',
-                (body, g.user['id'], corpse_id, 0)
+                (body, user_id, session["corpseId"], 0)
             )
             db.commit()
         #Check if the corpse has been completed and update the record
-        if len(limb_rows) >= 5:
+        if session["row_size"] >= 5:
             db.execute(
-                'UPDATE corpse SET completed = 1 WHERE id = (?)', (corpse_id,)
+                'UPDATE corpse SET completed = 1 WHERE id = (?)', (session["corpseId"],)
             )
             db.commit()
         return redirect(url_for('corpse.index'))
-    return render_template('corpse/new_limb.html', prompt = limb)
+    return render_template('corpse/new_limb.html', prompt = session["limb"])
 
 @bp.route('/mine')
 def mine():
