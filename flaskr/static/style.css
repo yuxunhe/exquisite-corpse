@@ -1,13 +1,14 @@
-html { font-family: sans-serif; background: #eee; padding: 1rem; }
+html { font-family: 'Chakra Petch', sans-serif; background: #111d40; padding: 1rem; }
 body { max-width: 960px; margin: 0 auto; background: white; }
-h1 { font-family: serif; color: #377ba8; margin: 1rem 0; }
-a { color: #377ba8; }
+h1 { font-family: 'Chakra Petch', sans-serif; color: #111d40; margin: 1rem 0; }
+a { color: #111d40; }
 hr { border: none; border-top: 1px solid lightgray; }
-nav { background: lightgray; display: flex; align-items: center; padding: 0 0.5rem; }
+nav { background: white; display: flex; align-items: center; padding: 0 0.5rem; }
 nav h1 { flex: auto; margin: 0; }
 nav h1 a { text-decoration: none; padding: 0.25rem 0.5rem; }
 nav ul  { display: flex; list-style: none; margin: 0; padding: 0; }
 nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
+.header > title {text-align: center; }
 .content { padding: 0 1rem 1rem; }
 .content > header { border-bottom: 1px solid lightgray; display: flex; align-items: flex-end; }
 .content > header h1 { flex: auto; margin: 1rem 0 0.25rem 0; }
@@ -20,7 +21,8 @@ nav ul li a, nav ul li span, header .action { display: block; padding: 0.5rem; }
 .content:last-child { margin-bottom: 0; }
 .content form { margin: 1em 0; display: flex; flex-direction: column; }
 .content label { font-weight: bold; margin-bottom: 0.5em; }
-.content input, .content textarea { margin-bottom: 1em; }
-.content textarea { min-height: 12em; resize: vertical; }
+.content input, .content textarea { font-family: 'Chakra Petch', sans-serif; margin-bottom: 1em; box-sizing: border-box; border-radius: 4px;}
+.content input { background: #111d40; color: white; }
+.content textarea { font-size: 200%; line-height: 200%; min-height: 12em; resize: vertical; background: #111d40; color: white}
 input.danger { color: #cc2f2e; }
 input[type=submit] { align-self: start; min-width: 10em; }
