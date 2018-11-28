@@ -3,8 +3,8 @@ from flask import (
 )
 from werkzeug.exceptions import abort
 
-from flaskr.auth import login_required
-from flaskr.db import get_db
+from exquisitecorpse.auth import login_required
+from exquisitecorpse.db import get_db
 import random
 
 bp = Blueprint('corpse', __name__)
@@ -13,11 +13,14 @@ bp = Blueprint('corpse', __name__)
 def index(): #add a limb
     db = get_db()
     #This part selects the prompt to be displayed
-    rows = db.execute(
-        'SELECT id FROM corpse WHERE completed = 0 ORDER BY id DESC'
-    ).fetchall() #1 is true!
+    try:
+        rows = db.execute(
+            'SELECT id FROM corpse WHERE completed = 0 ORDER BY id DESC'
+        ).fetchall() #1 is true!
+    except:
+        return render_template('corpse/new-corpse-prompt.html.j2')
     if len(rows) == 0:
-        return redirect(url_for('corpse.no_corpse_available'))
+        return render_template('corpse/new-corpse-prompt.html.j2')
     if request.method == 'GET':
         row = random.choice(rows)
         corpse_id = row["id"]
@@ -56,7 +59,7 @@ def index(): #add a limb
             )
             db.commit()
         return redirect(url_for('corpse.index'))
-    return render_template('corpse/new_limb.html', prompt = session["limb"])
+    return render_template('corpse/new_limb.html.j2', prompt = session["limb"])
 
 @bp.route('/mine')
 def mine():
@@ -77,7 +80,7 @@ def mine():
         corpses.append(
             ("<br/>").join(limbs)
         )
-    return render_template('corpse/mine.html', header = "My Contributions", corpses = corpses)
+    return render_template('corpse/mine.html.j2', header = "My Contributions", corpses = corpses)
 
 @bp.route('/randomone')
 def randomone():
@@ -86,7 +89,7 @@ def randomone():
         'SELECT id FROM corpse WHERE completed = 1 ORDER BY id DESC'
     ).fetchall()
     if len(rows) == 0:
-        return render_template('corpse/mine.html', corpses = [])
+        return render_template('corpse/mine.html.j2', corpses = [])
     random.shuffle(rows)
     row = rows[0]
     corpse_id = row['id']
@@ -100,7 +103,7 @@ def randomone():
     corpses.append(
         ("<br/>").join(limbs)
     )
-    return render_template('corpse/mine.html', header = "A Random Corpse", corpses = corpses)
+    return render_template('corpse/mine.html.j2', header = "A Random Corpse", corpses = corpses)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
@@ -130,8 +133,4 @@ def create():
             db.commit()
             return redirect(url_for('corpse.index'))
 
-    return render_template('corpse/create.html')
-
-@bp.route('/no_corpse_available')
-def no_corpse_available():
-    return render_template('corpse/new-corpse-prompt.html')
+    return render_template('corpse/create.html.j2')
