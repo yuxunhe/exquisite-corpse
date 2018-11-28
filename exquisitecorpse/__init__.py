@@ -8,7 +8,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
+        DATABASE=os.path.join(app.instance_path, 'exquisite-corpse.sqlite'),
     )
 
     if test_config is None:
@@ -33,5 +33,9 @@ def create_app(test_config=None):
     from . import corpse
     app.register_blueprint(corpse.bp)
     app.add_url_rule('/', endpoint='index')
+
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return "Page not found."
 
     return app
