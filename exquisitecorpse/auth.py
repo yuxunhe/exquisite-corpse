@@ -5,7 +5,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from exquisitecorpse.db import get_db
+from exquisitecorpse import db
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -15,35 +15,32 @@ def register():
         username = request.form['username']
         password = request.form['password']
         re_entered_password = request.form['re-entered-password']
-        db = get_db()
-        error = None
+        error = False
         if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
-        elif not re_entered_password:
-            error = 'Please confirm password.'
-        elif db.execute(
-            'SELECT id FROM user WHERE username = ?', (username,)
-        ).fetchone() is not None:
-            error = 'User {} is already registered.'.format(username)
-        elif password != re_entered_password:
-            error = "Re-entered password is different from password. Please try again."
-        if error is None:
-            db.execute(
-                'INSERT INTO user (username, password) VALUES (?, ?)',
-                (username, generate_password_hash(password))
-            )
-            db.commit()
-            user = db.execute(
-                'SELECT id FROM user ORDER BY id DESC'
-            ).fetchone()
+            flash('Username is required.')
+            error = True
+        if not password:
+            flash('Password is required.')
+            error = True
+        if not re_entered_password:
+            flash('Please confirm password.')
+            error = True
+        if User.query.filter_by(username=username).first() is not None:
+            flash('User {} is already registered.'.format(username))
+            error = True
+        if password != re_entered_password:
+            flash("Passwords do not match.")
+            error = True
+        if error is False:
+            new_user = User(username=username, password=generate_password_hash(password))
+            db.session.add(new_user)
+            db.session.commit()
+            user = User.query.filter_by(username=username)
             session.clear()
             session['user_id'] = user['id']
+            flash("You are now registered!")
+            flash("Logged in successfully")
             return redirect(url_for('index'))
-
-        flash(error)
-
     return render_template('auth/register.html.j2')
 
 @bp.route('/login', methods=('GET', 'POST'))
@@ -52,23 +49,20 @@ def login():
         username = request.form['username']
         password = request.form['password']
         db = get_db()
-        error = None
-        user = db.execute(
-            'SELECT * FROM user WHERE username = ?', (username,)
-        ).fetchone()
+        error = False
+        user = User.query.filter_by(username=username).first()
 
         if user is None:
-            error = 'Incorrect username.'
-        elif not check_password_hash(user['password'], password):
-            error = 'Incorrect password.'
+            flash('Incorrect username.')
+            error = True
+        elif not check_password_hash(user.password, password):
+            flash('Incorrect password.')
+            error = True
 
-        if error is None:
+        if error is False:
             session.clear()
             session['user_id'] = user['id']
             return redirect(url_for('index'))
-
-        flash(error)
-
     return render_template('auth/login.html.j2')
 
 @bp.before_app_request
@@ -78,9 +72,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = get_db().execute(
-            'SELECT * FROM user WHERE id = ?', (user_id,)
-        ).fetchone()
+        g.user = User.query.filter_by(id=user_id)
 
 @bp.route('/logout')
 def logout():

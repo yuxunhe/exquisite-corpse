@@ -4,9 +4,7 @@ import click
 from flask import current_app, g
 from flask.cli import with_appcontext
 
-from flask_sqlalchemy import SQLAlchemy
-
-db = SQLAlchemy(app)
+from exquisitecorpse import db
 
 # TODO: Check username and password lengths to prevent overflow in database
 class User(db.Model):

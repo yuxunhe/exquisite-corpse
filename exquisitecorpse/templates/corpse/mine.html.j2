@@ -7,11 +7,11 @@
 {% block content %}
   {% for corpse in corpses %}
     <article class="corpse">
+      {% for limb in corpse.limbs %}
       <p class="body">
-        {% autoescape false %}
-          {{corpse}}
-        {% endautoescape %}
+          {{limb}}
       </p>
+      {% endfor %}
     </article>
     {% if not loop.last %}
       <hr>

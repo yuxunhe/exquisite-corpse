@@ -2,7 +2,10 @@ import os
 
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
+db = SQLAlchemy()
+migrate = Migrate()
 
 def create_app():
     # create and configure the app
@@ -10,9 +13,11 @@ def create_app():
 
     app.config.update(
         SECRET_KEY = os.environ.get("SECRET_KEY", default=None),
-        SQLALCHEMY_DATABASE_URI = os.environ.get("SECRET_KEY", default="sqlite:///" + os.path.join(app.instance_path, 'database.sqlite'))
+        SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE", default="sqlite:///" + os.path.join(app.instance_path, 'database.sqlite')),
+        SQLALCHEMY_TRACK_MODIFICATIONS = False
     )
-    if not SECRET_KEY:
+    if not app.config.get('SECRET_KEY'):
+        print("No secret key!")
         raise ValueError("No secret key set for Flask application")
 
     # ensure the instance folder exists
@@ -23,6 +28,7 @@ def create_app():
 
     from . import db
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from . import auth
     app.register_blueprint(auth.bp)
