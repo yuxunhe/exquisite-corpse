@@ -4,62 +4,37 @@ from flask import (
 from werkzeug.exceptions import abort
 
 from exquisitecorpse.auth import login_required
-from exquisitecorpse.db import get_db
+from exquisitecorpse.db import db, User, Limb, Corpse
 import random
 
 bp = Blueprint('corpse', __name__)
 
 @bp.route('/', methods=('GET', 'POST'))
 def index(): #add a limb
-    db = get_db()
-    #This part selects the prompt to be displayed
-    try:
-        rows = db.execute(
-            'SELECT id FROM corpse WHERE completed = 0 ORDER BY id DESC'
-        ).fetchall() #1 is true!
-    except:
-        return render_template('corpse/new-corpse-prompt.html.j2')
-    if len(rows) == 0:
+    if Limb.query.all() == None:
         return render_template('corpse/new-corpse-prompt.html.j2')
     if request.method == 'GET':
-        row = random.choice(rows)
-        corpse_id = row["id"]
-        session["corpseId"] = corpse_id
-        print("retrived id: %d" %(corpse_id))
-        limb_rows= db.execute(
-            'SELECT body FROM limb WHERE corpse_id = (?) ORDER BY created DESC', (corpse_id,)
-        ).fetchall()
-        limb = limb_rows[0][0]
-        session["limb"] = limb
-        session["row_size"] = len(limb_rows)
+        # Fetch last limb from random corpse
+        session['limb'] = random.choice(Limb.query.all())
+        print("retrived corpse: " + limb.corpse.id)
     #This part actually handles the posting
     if request.method == 'POST':
         body = request.form['body']
-        error = None
         if not body:
-            error = 'Content is required.'
-        if error is not None:
-            flash(error)
+            flash("Content is required")
         else:
-            #db = get_db()
-            user_id = "NULL"
+            user_id = None
             if g.user:
                 user_id = g.user['id']
-            print("posted id: %d" %(session["corpseId"]))
-            db.execute(
-                'INSERT INTO limb (body, author_id, corpse_id, completed)'
-                ' VALUES (?, ?, ?, ?)',
-                (body, user_id, session["corpseId"], 0)
-            )
-            db.commit()
-        #Check if the corpse has been completed and update the record
-        if session["row_size"] >= 5:
-            db.execute(
-                'UPDATE corpse SET completed = 1 WHERE id = (?)', (session["corpseId"],)
-            )
-            db.commit()
+            new_limb = Limb(author_id=user_id, corpse_id=session['limb'].corpse_id, body=body, completed=False)
+            print("posted id: " + session["limb"].corpse.id)
+            #Check if the corpse has been completed and update the record
+            if session['limb'].corpse.limbs.count() >= 5:
+                new_limb.completed=True
+            db.session.add(new_limb)
+            db.session.commit()
         return redirect(url_for('corpse.index'))
-    return render_template('corpse/new_limb.html.j2', prompt = session["limb"])
+    return render_template('corpse/new_limb.html.j2', prompt = session['limb'].body)
 
 @bp.route('/mine')
 def mine():
