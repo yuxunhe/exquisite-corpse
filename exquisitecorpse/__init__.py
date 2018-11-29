@@ -1,22 +1,24 @@
 import os
 
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
+db = SQLAlchemy()
+migrate = Migrate()
 
-def create_app(test_config=None):
+def create_app():
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'exquisite-corpse.sqlite'),
-    )
 
-    if test_config is None:
-        # load the instance config, if it exists, when not testing
-        app.config.from_pyfile('config.py', silent=True)
-    else:
-        # load the test config if passed in
-        app.config.from_mapping(test_config)
+    app.config.update(
+        SECRET_KEY = os.environ.get("SECRET_KEY", default=None),
+        SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE", default="sqlite:///" + os.path.join(app.instance_path, 'database.sqlite')),
+        SQLALCHEMY_TRACK_MODIFICATIONS = False
+    )
+    if not app.config.get('SECRET_KEY'):
+        print("No secret key!")
+        raise ValueError("No secret key set for Flask application")
 
     # ensure the instance folder exists
     try:
@@ -26,6 +28,7 @@ def create_app(test_config=None):
 
     from . import db
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from . import auth
     app.register_blueprint(auth.bp)

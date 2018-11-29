@@ -3,107 +3,49 @@ from flask import (
 )
 from werkzeug.exceptions import abort
 
+from exquisitecorpse import db
 from exquisitecorpse.auth import login_required
-from exquisitecorpse.db import get_db
+from exquisitecorpse.db import User, Limb, Corpse
 import random
 
 bp = Blueprint('corpse', __name__)
 
 @bp.route('/', methods=('GET', 'POST'))
 def index(): #add a limb
-    db = get_db()
-    #This part selects the prompt to be displayed
-    try:
-        rows = db.execute(
-            'SELECT id FROM corpse WHERE completed = 0 ORDER BY id DESC'
-        ).fetchall() #1 is true!
-    except:
-        return render_template('corpse/new-corpse-prompt.html.j2')
-    if len(rows) == 0:
+    if Limb.query.first() == None:
         return render_template('corpse/new-corpse-prompt.html.j2')
     if request.method == 'GET':
-        row = random.choice(rows)
-        corpse_id = row["id"]
-        session["corpseId"] = corpse_id
-        print("retrived id: %d" %(corpse_id))
-        limb_rows= db.execute(
-            'SELECT body FROM limb WHERE corpse_id = (?) ORDER BY created DESC', (corpse_id,)
-        ).fetchall()
-        limb = limb_rows[0][0]
-        session["limb"] = limb
-        session["row_size"] = len(limb_rows)
+        # Fetch last limb from random corpse
+        session['limb'] = random.choice(Limb.query.all())
+        print("retrived corpse: " + limb.corpse.id)
     #This part actually handles the posting
     if request.method == 'POST':
         body = request.form['body']
-        error = None
         if not body:
-            error = 'Content is required.'
-        if error is not None:
-            flash(error)
+            flash("Content is required")
         else:
-            #db = get_db()
-            user_id = "NULL"
+            user_id = None
             if g.user:
                 user_id = g.user['id']
-            print("posted id: %d" %(session["corpseId"]))
-            db.execute(
-                'INSERT INTO limb (body, author_id, corpse_id, completed)'
-                ' VALUES (?, ?, ?, ?)',
-                (body, user_id, session["corpseId"], 0)
-            )
-            db.commit()
-        #Check if the corpse has been completed and update the record
-        if session["row_size"] >= 5:
-            db.execute(
-                'UPDATE corpse SET completed = 1 WHERE id = (?)', (session["corpseId"],)
-            )
-            db.commit()
+            new_limb = Limb(author_id=user_id, corpse_id=session['limb'], body=body, completed=False)
+            print("posted id: " + session["limb"].corpse.id)
+            #Check if the corpse has been completed and update the record
+            if session['limb'].corpse.limbs.count() >= 5:
+                new_limb.completed=True
+            db.session.add(new_limb)
+            db.session.commit()
         return redirect(url_for('corpse.index'))
-    return render_template('corpse/new_limb.html.j2', prompt = session["limb"])
+    return render_template('corpse/new_limb.html.j2', prompt = session['limb'].body)
 
 @bp.route('/mine')
 def mine():
-    db = get_db()
-    user_id = session.get('user_id')
-    rows = db.execute(
-        'SELECT id FROM corpse WHERE author_id = ? ORDER BY id DESC', (g.user['id'],)
-    ).fetchall()
-    corpses = []
-    for row in rows:
-        corpse_id = row['id']
-        limbs = []
-        limb_rows = db.execute(
-        'SELECT body from limb WHERE corpse_id = ? ORDER BY created ASC', (corpse_id,)
-        ).fetchall()
-        for row in limb_rows:
-            limbs.append(row[0])
-        corpses.append(
-            ("<br/>").join(limbs)
-        )
-    return render_template('corpse/mine.html.j2', header = "My Contributions", corpses = corpses)
+    user = User.query.filter_by(id=g.user['id']).first()
+    return render_template('corpse/mine.html.j2', header = "My Contributions", corpses = user.corpses)
 
-@bp.route('/randomone')
+@bp.route('/random')
 def randomone():
-    db = get_db()
-    rows = db.execute(
-        'SELECT id FROM corpse WHERE completed = 1 ORDER BY id DESC'
-    ).fetchall()
-    if len(rows) == 0:
-        return render_template('corpse/mine.html.j2', corpses = [])
-    random.shuffle(rows)
-    row = rows[0]
-    corpse_id = row['id']
-    limbs = []
-    limb_rows = db.execute(
-        'SELECT body from limb WHERE corpse_id = ? ORDER BY created ASC', (corpse_id,)
-    ).fetchall()
-    for row in limb_rows:
-        limbs.append(row[0])
-    corpses = []
-    corpses.append(
-        ("<br/>").join(limbs)
-    )
-    return render_template('corpse/mine.html.j2', header = "A Random Corpse", corpses = corpses)
+    corpse = random.choice(Limb.query.all())
+    return render_template('corpse/mine.html.j2', header = "A Random Corpse", corpses = corpse)
 
 
 @bp.route('/create', methods=('GET', 'POST'))
@@ -111,26 +53,14 @@ def randomone():
 def create():
     if request.method == 'POST':
         body = request.form['body']
-        error = None
-
         if not body:
-            error = 'Content is required.'
-
-        if error is not None:
-            flash(error)
+            flash('Content is required.')
         else:
-            db = get_db()
-            db.execute(
-                'INSERT INTO corpse (author_id) VALUES (?)',
-                (g.user['id'],)
-            )
-            corpse_id = db.execute('SELECT id from corpse ORDER BY id DESC').fetchone()
-            db.execute(
-                'INSERT INTO limb (body, author_id, corpse_id, completed)'
-                ' VALUES (?, ?, ?, ?)',
-                (body, g.user['id'], corpse_id['id'], 0)
-            )
-            db.commit()
+            new_corpse = Corpse(author_id=g.user['id'])
+            new_limb = Limb(author_id=g.user['id'], corpse_id=new_corpse, body=body, completed=False)
+            db.session.add(new_corpse)
+            db.session.add(new_limb)
+            db.session.commit()
             return redirect(url_for('corpse.index'))
 
     return render_template('corpse/create.html.j2')
