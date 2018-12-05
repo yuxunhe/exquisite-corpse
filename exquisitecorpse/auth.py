@@ -5,16 +5,16 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from exquisitecorpse import db
+from exquisitecorpse.db import db, User
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        re_entered_password = request.form['re-entered-password']
+        username = request.form.get('username')
+        password = request.form.get('password')
+        re_entered_password = request.form.get('re_entered_password')
         error = False
         if not username:
             flash('Username is required.')
@@ -35,20 +35,19 @@ def register():
             new_user = User(username=username, password=generate_password_hash(password))
             db.session.add(new_user)
             db.session.commit()
-            user = User.query.filter_by(username=username)
+            user = User.query.filter_by(username=username).first()
             session.clear()
-            session['user_id'] = user['id']
+            session['user_id'] = user.id
             flash("You are now registered!")
-            flash("Logged in successfully")
+            flash("Successfully logged in")
             return redirect(url_for('index'))
     return render_template('auth/register.html.j2')
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        db = get_db()
+        username = request.form.get('username')
+        password = request.form.get('password')
         error = False
         user = User.query.filter_by(username=username).first()
 
@@ -61,7 +60,8 @@ def login():
 
         if error is False:
             session.clear()
-            session['user_id'] = user['id']
+            session['user_id'] = user.id
+            flash('Successfully logged in')
             return redirect(url_for('index'))
     return render_template('auth/login.html.j2')
 
@@ -72,11 +72,12 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = User.query.filter_by(id=user_id)
+        g.user = User.query.filter_by(id=user_id).first()
 
 @bp.route('/logout')
 def logout():
     session.clear()
+    flash('Successfully logged out')
     return redirect(url_for('index'))
 
 def login_required(view):

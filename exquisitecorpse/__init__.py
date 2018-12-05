@@ -1,11 +1,12 @@
 import os
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
+# from flask_sqlalchemy import SQLAlchemy
+# from flask_migrate import Migrate
 
-db = SQLAlchemy()
-migrate = Migrate()
+from . import auth, corpse
+
+from .db import db, migrate
 
 def create_app():
     # create and configure the app
@@ -26,14 +27,11 @@ def create_app():
     except OSError:
         pass
 
-    from . import db
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from . import auth
     app.register_blueprint(auth.bp)
 
-    from . import corpse
     app.register_blueprint(corpse.bp)
     app.add_url_rule('/', endpoint='index')
 
