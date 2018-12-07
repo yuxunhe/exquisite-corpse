@@ -17,7 +17,7 @@ def index(): #add a limb
     if request.method == 'GET':
         # Fetch last limb from random corpse
         limb = random.choice(Limb.query.all())
-        session['limb_id'] = limb.id
+        session['corpse_id'] = limb.corpse_id
     #This part actually handles the posting
     if request.method == 'POST':
         body = request.form['body']
@@ -27,7 +27,7 @@ def index(): #add a limb
             user_id = None
             if g.user:
                 user_id = g.user.id
-            new_limb = Limb(author_id=user_id, corpse_id=session.get('limb_id'), created=datetime.datetime.now(), body=body, completed=False)
+            new_limb = Limb(author_id=user_id, corpse_id=session.get('corpse_id'), created=datetime.datetime.now(), body=body, completed=False)
             # TODO: Check if the corpse has been completed and update the record
             # The relationship needs to be queried correctly through SQLalchemy
             # if Limb.query.join(Corpse).join(Limb).filter_by(id=session.get('limb_id')).corpses.limbs.count() >= 5:
@@ -40,12 +40,14 @@ def index(): #add a limb
 @bp.route('/mine')
 def mine():
     user = User.query.filter_by(id=g.user.id).first()
+    print(user.corpses)
+    print(user.corpses[0].limbs[0].body)
     return render_template('corpse/mine.html.j2', header = "My Contributions", corpses = user.corpses)
 
 @bp.route('/random')
 def randomone():
-    corpse = random.choice(Limb.query.all())
-    return render_template('corpse/mine.html.j2', header = "A Random Corpse", corpses = corpse)
+    corpse = random.choice(Corpse.query.all())
+    return render_template('corpse/mine.html.j2', header = "A Random Corpse", corpses = [corpse])
 
 
 @bp.route('/create', methods=('GET', 'POST'))
