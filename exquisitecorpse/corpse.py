@@ -16,8 +16,9 @@ def index(): #add a limb
         return render_template('corpse/new-corpse-prompt.html.j2')
     if request.method == 'GET':
         # Fetch last limb from random corpse
-        limb = random.choice(Limb.query.all())
-        session['corpse_id'] = limb.corpse_id
+        corpse = random.choice(Corpse.query.all())
+        limb = corpse.limbs[-1]
+        session['corpse_id'] = corpse.id
     #This part actually handles the posting
     if request.method == 'POST':
         body = request.form['body']
@@ -27,7 +28,9 @@ def index(): #add a limb
             user_id = None
             if g.user:
                 user_id = g.user.id
-            new_limb = Limb(author_id=user_id, corpse_id=session.get('corpse_id'), created=datetime.datetime.now(), body=body, completed=False)
+            #new_limb = Limb(author_id=user_id, corpse_id=session.get('corpse_id'), created=datetime.datetime.now(), body=body, completed=False)
+            new_limb = Limb(author_id=user_id, corpse_id=1, created=datetime.datetime.now(), body=body, completed=False)
+
             # TODO: Check if the corpse has been completed and update the record
             # The relationship needs to be queried correctly through SQLalchemy
             # if Limb.query.join(Corpse).join(Limb).filter_by(id=session.get('limb_id')).corpses.limbs.count() >= 5:
